@@ -68,6 +68,7 @@ class Range:
         return sum(self.r)
 
     def getNumHandsWithoutConflics(self, cardslist):
+
         temp = np.copy(self.r)
 
         zeroHandsWithConflics(temp, cardslist)
