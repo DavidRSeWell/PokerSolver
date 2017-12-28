@@ -1,13 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Jul 07 10:38:09 2014
-
-@author: Befeltingu
-"""
 import os
 import numpy as np
 import pokereval
 import scipy.misc
+
+from FP.EquityArray import EquityArray
 
 numCards = 52
 numRanks = 13
@@ -19,6 +15,15 @@ suits = ['h', 'd', 'c', 's']
 ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
 
 pe = pokereval.PokerEval()
+
+
+
+def conflics(cards1, cards2):
+    for i in cards1:
+        for j in cards2:
+            if i == j and i < numCards:
+                return True
+    return False
 
 
 def getEquityVsHandFast(hand, villianHand, ea):
@@ -43,7 +48,10 @@ def getEquityVsRange(hand, r, ea):
     return sum(sum(np.multiply(eqs, villianRange))) / sum(sum(villianRange))
 
 
+
+
 class Range:
+
     def __init__(self, initFrac=None):
         self.r = np.zeros((numCards, numCards))
         if initFrac != None:
@@ -164,7 +172,7 @@ class Range:
 
         rangeAllHands = Range()
         rangeAllHands.setAllFracs(1.0)
-        handsSorted = getHandsSortedAndEquities(rangeAllHands, board)
+        handsSorted = self.getHandsSortedAndEquities(rangeAllHands, board)
 
         numCardsLeft = numCards
         for c in board:
@@ -189,124 +197,5 @@ class Range:
 
         return result
 
-
-def conflics(cards1, cards2):
-    for i in cards1:
-        for j in cards2:
-            if i == j and i < numCards:
-                return True
-    return False
-
-
-def getEquityVsHand(hand1, hand2, board):
-    peresult = pe.poker_eval(game='holdem', pockets=[hand1, hand2], board=board)
-    numWins = peresult['eval'][0]['winhi']
-    numTies = peresult['eval'][0]['tiehi']
-    numRunouts = peresult['info'][0]
-    return (numWins + numTies / 2.0) / numRunouts
-
-
-class EquityArray:
-    def __init__(self, b):
-        self.board = b
-        self.eArray = np.zeros((numCards, numCards, numCards, numCards))
-
-        if os.path.isfile(self.getFilename()):
-            self.eArray = np.load(self.getFilename())
-
-        else:
-            self.makeArray()
-
-    def makeArray(self):
-        for i in range(numCards):
-            for j in range(numCards):
-                for a in range(numCards):
-                    for b in range(numCards):
-                        hand = [i, j]
-                        villianHand = [a, b]
-                        self.eArray[i][j][a][b] = getEquityVsHand(hand, villianHand, self.board)
-        np.save(self.getFilename(), self.eArray)
-
-    # ouput: filename builf from self.board
-    def getFilename(self):
-
-        boardStr = ''
-        boardAsStrings = pe.card2string(self.board)
-        for i in boardAsStrings:
-            if i != '__':
-                boardStr = boardStr + i
-
-        if boardStr == '':  # for the preflop board
-            boardStr = 'preflop'
-        boardStr = boardStr + '.ea.npy'
-        return boardStr
-
-        # modifys r1 to incorporate some amount of r2. The fraction of every hand in r1
-
-
-# at the end of the function will be (old amount) * (fraction) + (new amount) * (1 - fraction)
-#    where fraction becomes closer to 1 the higher n is
-def updateRange(r1, r2, n):
-    fraction = 1 - 1 / (n + 2.0)
-
-    for i in range(numCards):
-        for j in range(i + 1, numCards):
-            hand = [i, j]
-            r1.setFrac(hand, (r1.getFrac(hand)) * (fraction) + (r2.getFrac(hand)) * (1 - fraction))
-
-
-def doShoveFoldGame():
-    nIter = 5  # number of iterations
-
-    S = 10  # stack size in BBs
-
-    ea = EquityArray(pe.string2card(['__', '__', '__', '__', '__']))
-
-    sbJamRange = Range()
-    sbJamRange.setAllFracs(0.5)
-
-    bbCallRange = Range()
-
-    bbCallRange.setAllFracs(0.5)
-
-    for n in range(nIter):
-
-        # solve for Sb max expl strat
-        bestSBJamRange = Range()
-        for i in range(numCards):
-            for j in range(i + 1, numCards):
-                hand = [i, j]
-                bb_call_freq = bbCallRange.getNumHandsWithoutConflics(hand) / numVillianHand
-                # evJame = (chance BB folds) * (S + 1) + (chance BB calls) * equity * 2*S
-
-                equity = getEquityVsRange(hand, bbCallRange, ea)
-
-                evJam = (1 - bb_call_freq) * (S + 1) + (bb_call_freq) * equity * 2 * S
-                evFold = S - 0.5
-
-                if (evJam > evFold):
-                    bestSBJamRange.setFrac(hand, 1)
-                else:
-                    bestSBJamRange.setFrac(hand, 0)
-
-        # update SB strategy
-        updateRange(sbJamRange, bestSBJamRange, n)
-        # solve for BB max expl strat
-        bestBBCallRange = Range()
-        for i in range(numCards):
-            for j in range(i + 1, numCards):
-
-                hand = [i, j]
-                equity = getEquityVsRange(hand, sbJamRange, ea)
-                evCall = 2 * S * equity
-                evFold = S - 1
-
-                if (evCall > evFold):
-                    bestBBCallRange.setFrac(hand, 1)
-                else:
-                    bestBBCallRange.setFrac(hand, 0)
-
-        updateRange(bbCallRange, bestBBCallRange, n)
-
-    display(sbJamRange)
-    display(bbCallRange)
+    def removeHandsWithConflicts(self,cardlist):
+        zeroHandsWithConflics(self.r, cardlist)

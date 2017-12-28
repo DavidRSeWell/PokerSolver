@@ -5,20 +5,14 @@ Created on Fri Jul 04 10:04:34 2014
 @author: Befeltingu
 """
 import os
-import pokereval
+#import pokereval
 import numpy
 import matplotlib.pyplot as plt
+import pydot
 
-from Range import *
 
-# board = ['__','__','__','__','__']
-
-board = (['8d', '6s', '3h', 'Kd', 'Jd'])
-
-pe = pokereval.PokerEval()
-board = pe.string2card(board)
-hand = pe.string2card(['4d', '5d'])
-
+from FP.DTree import DecesionTree
+from FP.DPoint import DecesionPoint
 
 def plotEqDistn(r1, r2, board):
     xs = []
@@ -37,18 +31,37 @@ def plotEqDistn(r1, r2, board):
     plt.show()
 
 
-# meEArray = EquityArray.EquityArray(board)
-
-# %timeit ipython function for knowing time it takes to run function
-
-# equity = getEquityVsHandFast(hand,villianHand,meEArray)
 
 
+run_min_raise_shove = 1
+if run_min_raise_shove:
 
-range1 = Range()
-range1.setAllFracs(1.0)
 
-display(range1)
+    S = 20
+
+    point0 = DecesionPoint("SB",0.5,1.0)
+    point1 = DecesionPoint("Leaf",0.5,1.0,parentAction="fold")
+    point2 = DecesionPoint("BB",2.0,1.0,parentAction="bet")
+    point3 = DecesionPoint("Leaf",2.0,1.0,parentAction="fold")
+    point4 = DecesionPoint("SB",2.0,20.0,parentAction="bet")
+    point5 = DecesionPoint("Leaf",2.0,20.0,parentAction="fold")
+    point6 = DecesionPoint("Leaf",20.0,20.0,parentAction="call")
+
+
+
+    tree = DecesionTree(S,point0)
+
+    tree.addDecPt(point1,point0)
+    tree.addDecPt(point2,point0)
+    tree.addDecPt(point3,point2)
+    tree.addDecPt(point4,point2)
+    tree.addDecPt(point5,point4)
+    tree.addDecPt(point6,point4)
+
+    tree_png = tree._repr_png_()
+
+
+
 
 
 
