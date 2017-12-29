@@ -5,10 +5,12 @@ Created on Fri Jul 04 10:04:34 2014
 @author: Befeltingu
 """
 import os
-#import pokereval
+import pokereval
 import numpy
 import matplotlib.pyplot as plt
 import pydot
+from FP.EquityArray import EquityArray
+from FP.utils import doFP
 
 
 from FP.DTree import DecesionTree
@@ -39,13 +41,20 @@ if run_min_raise_shove:
 
     S = 20
 
+    pe = pokereval.PokerEval()
+
+    board = ['__','__','__','__','__']
+
+
+    preFlopEquity = EquityArray(board=pe.string2card(board))
+
     point0 = DecesionPoint("SB",0.5,1.0)
-    point1 = DecesionPoint("Leaf",0.5,1.0,parentAction="fold")
-    point2 = DecesionPoint("BB",2.0,1.0,parentAction="bet")
-    point3 = DecesionPoint("Leaf",2.0,1.0,parentAction="fold")
-    point4 = DecesionPoint("SB",2.0,20.0,parentAction="bet")
-    point5 = DecesionPoint("Leaf",2.0,20.0,parentAction="fold")
-    point6 = DecesionPoint("Leaf",20.0,20.0,parentAction="call")
+    point1 = DecesionPoint("Leaf",0.5,1.0,preFlopEquity,parentAction="fold")
+    point2 = DecesionPoint("BB",2.0,1.0,preFlopEquity,parentAction="bet")
+    point3 = DecesionPoint("Leaf",2.0,1.0,preFlopEquity,parentAction="fold")
+    point4 = DecesionPoint("SB",2.0,20.0,preFlopEquity,parentAction="bet")
+    point5 = DecesionPoint("Leaf",2.0,20.0,preFlopEquity,parentAction="fold")
+    point6 = DecesionPoint("Leaf",20.0,20.0,preFlopEquity,parentAction="call")
 
 
 
@@ -58,7 +67,7 @@ if run_min_raise_shove:
     tree.addDecPt(point5,point4)
     tree.addDecPt(point6,point4)
 
-    tree_png = tree._repr_png_()
+    minRFoldSolution = doFP(tree,100)
 
 
 

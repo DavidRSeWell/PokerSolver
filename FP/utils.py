@@ -7,7 +7,6 @@ from FP.StrategyPair import StrategyPair
 numCards = 52
 
 
-
 def setHandsWithConflicts(handArray,cardslist,n):
 
     for c in cardslist:
@@ -16,6 +15,7 @@ def setHandsWithConflicts(handArray,cardslist,n):
             handArray[:, c] = n
 
 def getEquityVsRange(hand, r, ea):
+
     herocard1, herocard2 = hand
     eqs = ea.eArray[herocard1, herocard2, :, :]
 
@@ -79,15 +79,15 @@ def setMaxExplEvHelper(tree,iDecPt,strats,hero,villian):
     :return:
     '''
 
-    currDecPt = tree.decPts[iDecPt]
+    currNodePlayer = tree.decPts[iDecPt].player
 
-    if (currDecPt == "Leaf"):
+    if (currNodePlayer == "Leaf"):
         setMaxExplEVsAtLeaf(tree,iDecPt,strats,hero,villian)
 
-    elif (currDecPt == hero):
+    elif (currNodePlayer == hero):
         setMaxExplEVsAtHero(tree,iDecPt,strats,hero,villian)
 
-    elif (currDecPt == villian):
+    elif (currNodePlayer == villian):
         setMaxExplEVsAtVillian(tree,iDecPt,strats,hero,villian)
 
     else:
@@ -117,7 +117,7 @@ def setMaxExplEVsAtLeaf(tree,iDecPt,strats,hero,villian):
             for j in range(i + 1,numCards):
 
                 strats.evs[hero][iDecPt] = (tree.effStack - currDecPt.getPlayerCIP(hero)) + \
-                                          (currentPot*getEquityVsRange([i,j],strats.getMostRecentRangeOf(villian,iDecPt)),currDecPt.eArray)
+                                          (currentPot*getEquityVsRange([i,j],strats.getMostRecentRangeOf(villian,iDecPt),currDecPt.eArray))
 
 
     else:
@@ -153,7 +153,7 @@ def setMaxExplEVsAtVillian(tree,iDecPt,strats,hero,villian):
 
                 for iChild in tree.children[iDecPt]:
 
-                    comboCounts[iChild] = strats.ranges[iChild].getNumHandsWithoutConflicts([i,j])
+                    comboCounts[iChild] = strats.ranges[iChild].getNumHandsWithoutConflics([i,j])
 
                     comboSum += comboCounts[iChild]
 
@@ -203,7 +203,6 @@ def setMaxExplEVsAtNature(tree,iDecPt,strats,hero,villian):
 
                     for iChild in tree.children[iDecPt]:
                         strats.evs[hero][iDecPt][i][j] += strats.evs[hero][iDecPt][i][j] * (comboCounts[iChild] / comboSum)
-
 
 ############### GET MAX STRATEGY ################
 
@@ -278,13 +277,12 @@ def getMaxEvStratHelper(tree,hero,stratPair,icurrDecPt,currRange,result):
                     if (maxEv > 0):
                         result[iMaxEv].setFrac([i,j],currRange.r[i][j])
 
-        for iChild in tree.children[currDecPt]:
+        for iChild in tree.children[icurrDecPt]:
             getMaxEvStratHelper(tree, hero, stratPair, iChild, result[iChild], result)
 
     else: # not a hero decesion point
-        for iChild in tree.children[currDecPt]:
+        for iChild in tree.children[icurrDecPt]:
             getMaxEvStratHelper(tree, hero, stratPair, iChild, currRange, result)
-
 
 ############### DO FP ################
 
@@ -295,6 +293,8 @@ def doFP(tree,niter,sbStartingRange=Range(1.0),bbStartingRange=Range(1.0)):
     strategyPair = StrategyPair(tree,sbStartingRange,bbStartingRange)
 
     for i in range(1,niter + 1):
+
+        print "Iteration: " + str(i)
 
         setMaxExplEv(tree,strategyPair,"SB","BB")
         sbMaxEVStrat = getMaxEvStrat(tree,"SB",strategyPair)

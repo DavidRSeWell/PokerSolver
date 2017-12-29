@@ -28,17 +28,34 @@ def getEquityVsHand(hand1,hand2,board):
     return (numWins + numTies/2.0) /numRunouts
 
 class EquityArray:
-    def __init__(self, b):
-        self.board = b
-        self.eArray = np.zeros((numCards, numCards, numCards, numCards))
 
-        if os.path.isfile(self.getFilename()):
-            self.eArray = np.load(self.getFilename())
+    def __init__(self, board,data_directory='/home/david/PokerSoln/EquityArrays/',eArray=None):
+
+        self.board = board
+
+        self.data_directory = data_directory
+
+        self.eArray = eArray
+
+        self.initialize()
+
+
+    def initialize(self):
+
+        file_path = self.data_directory + self.getFilename()
+
+        if os.path.isfile(file_path):
+
+            self.eArray = np.load(file_path)
 
         else:
+
             self.makeArray()
 
     def makeArray(self):
+
+        self.eArray = np.zeros((numCards, numCards, numCards, numCards))
+
         for i in range(numCards):
             for j in range(numCards):
                 for a in range(numCards):
@@ -46,7 +63,10 @@ class EquityArray:
                         hand = [i, j]
                         villianHand = [a, b]
                         self.eArray[i][j][a][b] = getEquityVsHand(hand, villianHand, self.board)
-        np.save(self.getFilename(), self.eArray)
+
+        file_path = self.data_directory + self.getFilename()
+
+        np.save(file_path, self.eArray)
 
     # ouput: filename builf from self.board
     def getFilename(self):

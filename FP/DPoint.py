@@ -43,11 +43,11 @@ class DecesionPoint(object):
         '''
 
         if player == "SB":
-            return self.initial_sb_chip
+            return self.initial_sb_cip
 
         elif player == "BB":
 
-            return self.initial_bb_chip
+            return self.initial_bb_cip
 
         else:
             print "ERROR: DecesionPoint.getPlayerCIP given player that doesnt exist"
