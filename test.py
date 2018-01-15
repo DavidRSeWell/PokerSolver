@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import pydot
 from FP.EquityArray import EquityArray
 from FP.utils import doFP
+import pandas as pd
 
 
 from FP.DTree import DecesionTree
@@ -32,10 +33,31 @@ def plotEqDistn(r1, r2, board):
     plt.plot(xs, ys)
     plt.show()
 
+def getEquityVsHand(hand1,hand2,board):
 
+    peresult = pe.poker_eval(game='holdem',pockets=[hand1,hand2],board=board)
+    numWins = peresult['eval'][0]['winhi']
+    numTies = peresult['eval'][0]['tiehi']
+    numRunouts = peresult['info'][0]
+    return (numWins + numTies/2.0) /numRunouts
 
+def getHandVsAll(hand1,board):
 
-run_min_raise_shove = 1
+    hand_string = pe.card2string(hand1)
+    result_list = []
+    for i in range(52):
+        for j in range(52):
+            if i != j:
+
+                equity_result = getEquityVsHand(hand1,[i,j],board)
+
+                hand2_string = ''.join(pe.card2string([i,j]))
+
+                result_list.append([hand2_string,equity_result])
+
+    return result_list
+
+run_min_raise_shove = 0
 if run_min_raise_shove:
 
 
@@ -68,6 +90,27 @@ if run_min_raise_shove:
     tree.addDecPt(point6,point4)
 
     minRFoldSolution = doFP(tree,100)
+
+
+test_distributions = 1
+if test_distributions:
+
+    pe = pokereval.PokerEval()
+
+    board = ['Ah', '3s', '7d', '9h', '__']
+
+    #turnEquity = EquityArray(board=pe.string2card(board))
+
+    hand = ['As','4d']
+
+    handVsAll = getHandVsAll(pe.string2card(hand),board)
+
+    hand_df = pd.DataFrame(handVsAll,columns=['hand','equity'])
+
+    print "ya"
+
+
+
 
 
 
